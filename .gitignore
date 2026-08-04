@@ -1,0 +1,39 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local config (secrets — never commit)
+local.properties
+local.properties.*
+!local.properties.example
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.navigation/
+captures/
+.cxx/
+.externalNativeBuild/
+.kotlin/
+
+# Build outputs
+*.apk
+*.aab
+*.ap_
+*.dex
+out/
+release/
+
+# Signing keys — never commit
+*.jks
+*.keystore
+keystore.properties
+
+# Native / profiling
+*.hprof
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

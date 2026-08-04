@@ -1,0 +1,13 @@
+# Bu dosyayı `local.properties` olarak kopyalayın (zaten gitignored) ve kendi değerlerinizi girin.
+# Android Studio da `sdk.dir=...` satırını bu dosyaya otomatik ekleyecektir — olduğu gibi bırakın.
+
+# GitHub Packages erişimi — Identify ekibi tarafından sağlanan, `read:packages` scope'lu GitHub PAT.
+gpr.user=YOUR_GITHUB_USERNAME
+gpr.key=ghp_YOUR_PERSONAL_ACCESS_TOKEN
+
+# Identify SDK çalışma zamanı config'i — Identify entegrasyon ekibi tarafından ortam bazında sağlanan değerler.
+# Gerçek değerleri asla commit etmeyin; bu dosya sadece kendi makinenizde kalır.
+identify.turnKey=
+identify.secretKeyBase64=
+identify.loggerSecretKey=
+identify.socketSecretKey=
