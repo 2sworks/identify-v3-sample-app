@@ -1,41 +1,41 @@
-# Identify SDK V3 — Sample Integration
+# Identify SDK V3 — Örnek Entegrasyon
 
-This repository is a **reference integration**, not the SDK itself. It shows exactly how a
-host app is expected to call the Identify SDK's public API — config setup, initialization,
-starting a verification flow, module selection, hooks — so integrators can copy real,
-working call patterns instead of guessing.
+Bu repo, SDK'nın kendisi değil, bir **referans entegrasyon**dur. Bir host uygulamanın
+Identify SDK'nın public API'sini nasıl çağırması gerektiğini gösterir — config kurulumu,
+initialization, doğrulama akışını başlatma, modül seçimi, hook'lar — böylece entegratörler
+tahmin etmek yerine gerçek, çalışan çağrı desenlerini kopyalayabilir.
 
-The SDK's implementation (`sdk-core`, `sdk-ui-default`, `sdk-ui-colendi`) is **not** included
-here. It's consumed as a compiled Maven dependency via GitHub Packages, exactly as any
-partner app would consume it.
+SDK'nın implementasyonu (`sdk-core`, `sdk-ui-default`, `sdk-ui-colendi`) bu repoda **yer
+almaz**. Tıpkı herhangi bir partner uygulamanın tüketeceği şekilde, GitHub Packages
+üzerinden derlenmiş bir Maven bağımlılığı olarak tüketilir.
 
 ---
 
-## What's in here
+## Bu repoda neler var
 
-| Path | What it shows |
+| Yol | Neyi gösteriyor |
 |---|---|
-| `app/src/main/kotlin/com/identify/sample/MainViewModel.kt` | The full call sequence: `SdkConfig.Builder(...)`, `IdentifySdk.init(...)`, `IdentifySdk.startAuthentication(...)`, module selection, SSL pinning, NFC dependency injection |
-| `app/src/main/kotlin/com/identify/sample/MainActivity.kt` | Minimal Activity hosting the SDK's Compose UI |
-| `app/src/main/kotlin/com/identify/sample/ui/MainScreen.kt` | Example settings/config screen (server switch, module toggles, language) |
-| `docs/` | Integration guides: SDK config reference, UI customization, hooks, OCR, guidance messages |
+| `app/src/main/kotlin/com/identify/sample/MainViewModel.kt` | Tüm çağrı sırası: `SdkConfig.Builder(...)`, `IdentifySdk.init(...)`, `IdentifySdk.startAuthentication(...)`, modül seçimi, SSL pinning, NFC bağımlılık enjeksiyonu |
+| `app/src/main/kotlin/com/identify/sample/MainActivity.kt` | SDK'nın Compose UI'ını host eden minimal bir Activity |
+| `app/src/main/kotlin/com/identify/sample/ui/MainScreen.kt` | Örnek ayarlar/config ekranı (sunucu switch'i, modül toggle'ları, dil) |
+| `docs/` | Entegrasyon kılavuzları: SDK config referansı, UI özelleştirme, hook'lar, OCR, yönlendirme mesajları |
 
 ---
 
-## 1. Prerequisites
+## 1. Ön Koşullar
 
-You'll need a GitHub Personal Access Token with `read:packages` scope, and the runtime
-secret values (turn server key, secret keys) — **provided to you by the Identify
-integration team through a separate secure channel.** None of these are stored in this
-repository.
+`read:packages` yetkisine sahip bir GitHub Personal Access Token'a ve runtime secret
+değerlerine (turn server key, secret key'ler) ihtiyacınız olacak — **bunlar Identify
+entegrasyon ekibi tarafından ayrı, güvenli bir kanaldan size sağlanır.** Bunların hiçbiri bu
+repoda saklanmaz.
 
-## 2. Configure your credentials
+## 2. Kimlik Bilgilerinizi Yapılandırın
 
 ```bash
 cp local.properties.example local.properties
 ```
 
-Edit `local.properties` and fill in the values you received:
+`local.properties` dosyasını açıp size sağlanan değerleri girin:
 
 ```properties
 gpr.user=YOUR_GITHUB_USERNAME
@@ -47,22 +47,44 @@ identify.loggerSecretKey=...
 identify.socketSecretKey=...
 ```
 
-`local.properties` is gitignored — it never leaves your machine. For CI, set the equivalent
-environment variables instead: `GPR_USER`, `GPR_TOKEN`, `IDENTIFY_TURN_KEY`,
-`IDENTIFY_SECRET_KEY_BASE64`, `IDENTIFY_LOGGER_SECRET_KEY`, `IDENTIFY_SOCKET_SECRET_KEY`
-(env vars take priority over `local.properties`, see `settings.gradle.kts` / `app/build.gradle.kts`).
+`local.properties` gitignore'a eklidir — makinenizden hiç çıkmaz. CI için bunun yerine
+karşılık gelen environment değişkenlerini ayarlayın: `GPR_USER`, `GPR_TOKEN`,
+`IDENTIFY_TURN_KEY`, `IDENTIFY_SECRET_KEY_BASE64`, `IDENTIFY_LOGGER_SECRET_KEY`,
+`IDENTIFY_SOCKET_SECRET_KEY` (env değişkenleri `local.properties`'e göre önceliklidir, bkz.
+`settings.gradle.kts` / `app/build.gradle.kts`).
 
-## 3. Build and run
+## 3. Derleme ve Çalıştırma
 
 ```bash
 ./gradlew :app:installDebug
 ```
 
+## 4. Demo switch'ler (giriş ekranı → "Seçenekleri Göster")
+
+Giriş ekranında **"Seçenekleri Göster"**'e dokunmak, "Seçenekleri Yönet" bottom sheet'ini
+açar (`MainScreen.kt` içindeki `OptionsBottomSheet`). Buradaki switch'lerden ikisi gerçek
+`MainViewModel` state'ine bağlıdır ve `startProcess(...)`'in ürettiği config'i değiştirir;
+geri kalanı `onCheckedChange` bağlanmamış, sadece görsel placeholder'lardır.
+
+| Switch | State (`MainViewModel`) | `startProcess(...)` üzerindeki etkisi |
+|---|---|---|
+| **Hook Demo** (*before/after/finished/cancelled/mesaj override*) | `useHookDemo` / `toggleHookDemo()` | Açıkken, `setBeforeHook`, `setAfterHook`, `onIdentifyFinished/Failed/Cancelled` ve mesaj override hook'larının tamamının bağlı olduğu bir `SdkHooks` örneği oluşturulur — tüm hook lifecycle noktalarını çalıştırır. Kapalıyken hiçbir hook geçilmez, SDK varsayılan akışıyla çalışır. Bkz. `docs/hooks.md`. |
+| **Custom UI Provider Demo** (*kendi Hazırlık + Selfie ekranımız*) | `useCustomUiProvider` / `toggleCustomUiProvider()` | Açıkken, `StandardUiProvider()` yerine `SampleUiProvider()` geçilir — bu, yalnızca Hazırlık (Preparation) ve Selfie ekranlarını uygulamaya ait Composable'larla override edip geri kalan her şeyi standart UI'a devreder. Bkz. `docs/ui-customization.md`. |
+
+Bunlardan birini koddan tetiklemek (veya kendi demo switch'inizi eklemek) için
+`MainViewModel.kt` içindeki aynı deseni izleyin: `StateFlow` olarak dışa açılan bir
+`MutableStateFlow<Boolean>`, bir `toggle...()` fonksiyonu ve `startProcess()` içinde config
+oluşturulurken `.value`'yu okuyan bir dallanma.
+
+Sheet üzerindeki diğer switch'ler ("Temsilci yayını büyük görünsün", "İşaret dili seçeneği
+aktif olsun", "Yeni canlılık testi ekranını dene", "SSL Pinning") bu örnekte sadece
+görüntülenir, SDK çağrısını etkilemez.
+
 ---
 
-## Where the actual service calls happen
+## Gerçek servis çağrılarının yapıldığı yer
 
-Everything a real integration needs is in `MainViewModel.startProcess(...)`:
+Gerçek bir entegrasyonun ihtiyaç duyduğu her şey `MainViewModel.startProcess(...)` içindedir:
 
 ```kotlin
 val builder = SdkConfig.Builder(baseUrl, BuildConfig.IDENTIFY_TURN_KEY)
@@ -81,10 +103,11 @@ IdentifySdk.init(application = activity.application, config = config)
 IdentifySdk.startAuthentication(activity, identIdValue)
 ```
 
-Read `docs/sdk-config.md` for every available `SdkConfig.Builder` option, and `docs/hooks.md`
-for lifecycle callbacks (`onIdentifyFinished`, `onIdentifyFailed`, `onIdentifyCancelled`).
+`SdkConfig.Builder`'daki tüm seçenekler için `docs/sdk-config.md`'yi, lifecycle callback'leri
+(`onIdentifyFinished`, `onIdentifyFailed`, `onIdentifyCancelled`) için `docs/hooks.md`'yi
+okuyun.
 
-## Support
+## Destek
 
-For questions about the SDK itself, GitHub Packages access, or environment-specific
-credentials, contact the Identify integration team.
+SDK'nın kendisi, GitHub Packages erişimi veya ortama özel kimlik bilgileri hakkındaki
+sorularınız için Identify entegrasyon ekibiyle iletişime geçin.
