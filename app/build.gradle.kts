@@ -66,6 +66,13 @@ dependencies {
     implementation("com.identify.sdk:sdk-core:$identifySdkVersion")
     implementation("com.identify.sdk:sdk-ui-default:$identifySdkVersion")
 
+    // SDK'nın CameraX bağımlılığı runtime classpath'e (implementation) geliyor, compile
+    // classpath'e değil — MySelfieScreen.kt gibi androidx.camera.* tiplerine doğrudan
+    // referans veren host kodu için burada ayrıca eklenmesi gerekiyor
+    // Sürüm sdk-core'un kullandığı 1.5.2 ile eşleştirildi (docs/dependencies.md).
+    implementation("androidx.camera:camera-core:1.5.2")
+    implementation("androidx.camera:camera-view:1.5.2")
+
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")

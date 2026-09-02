@@ -66,6 +66,27 @@ SDK içe aktarıldığında aşağıdaki kütüphaneler **otomatik olarak** proj
 | `com.google.mlkit:object-detection` | `17.0.2` |
 | `com.google.mediapipe:tasks-vision` | `0.10.33` |
 
+> **Not — CameraX sadece runtime'a otomatik geliyor, derleme zamanına değil:** `sdk-ui-default`,
+> yukarıdaki `androidx.camera:*` kütüphanelerini Gradle'da **`implementation`** scope'unda tutuyor,
+> `api` değil (bunu `sdk-ui-default-3.5.4.module` dosyasındaki `releaseVariantReleaseApiPublication`
+> vs. `releaseVariantReleaseRuntimePublication` varyantlarını karşılaştırarak doğruladık — camera-*
+> yalnızca runtime varyantında listeleniyor). Pratikte fark şu:
+>
+> - `sdk-core`/`sdk-ui-default`'ı olduğu gibi kullanan (ör. `StandardUiProvider`'a delege eden veya
+>   [`CustomSelfieScreen`](../app/src/main/kotlin/com/identify/sample/ui/CustomSelfieScreen.kt) gibi
+>   `androidx.camera.*` sınıflarına hiç dokunmayan) kodunuz **hiçbir ek bağımlılık eklemeden derlenir**
+>   — CameraX zaten APK'ya (runtime'a) otomatik giriyor.
+> - Ama kendi ekranınızda `CameraPreview`, `ImageCapture`, `CameraSelector`, `ImageAnalysis` gibi
+>   sınıflara **doğrudan** referans verirseniz (ör. gerçek kamerayı bağladığınız kısmi bir override —
+>   bkz. [`MySelfieScreen`](../app/src/main/kotlin/com/identify/sample/ui/MySelfieScreen.kt) ve
+>   [custom-selfie-screen-example.md](custom-selfie-screen-example.md)), bu derlenmez:
+>   `Unresolved reference` hatası alırsınız. Çözüm, `app/build.gradle.kts`'e bu iki kütüphaneyi
+>   elle eklemek (versiyonu yukarıdaki tabloyla eşleştirin):
+>   ```kotlin
+>   implementation("androidx.camera:camera-core:1.5.2")
+>   implementation("androidx.camera:camera-view:1.5.2")
+>   ```
+
 ### NFC & Güvenlik
 
 | Kütüphane | Sürüm |
