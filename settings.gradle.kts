@@ -39,7 +39,7 @@ dependencyResolutionManagement {
         // sürümleri çözer (örn. "3.4.5-navfix1" test build'leri), yani gerçek yayınlanmış
         // sürümlerin önüne asla geçmez. GitHub Packages'ta gerçek düzeltilmiş sürüm
         // yayınlandığında kaldırılması güvenlidir.
-        maven { url = uri("D:/IdentifySdkV3/repo") }
+       // maven { url = uri("D:/IdentifySdkV3/repo") }
     }
 }
 
