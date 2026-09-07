@@ -118,8 +118,13 @@ class SampleUiProvider : SdkUiProvider {
     @Composable
     override fun PassportScreen(onNext: () -> Unit, onBack: () -> Unit) = standard.PassportScreen(onNext, onBack)
 
+    // Özel — MyNfcScreen'e bakın: SDK'nın gerçek NfcViewModel'i + gerçek NFC donanım bağlantısı
+    // (IdentifyActivity.enableNfcReaderMode()/getNfcTagFlow()) kendi UI'ımızla nasıl kullanılır,
+    // orada gösteriliyor.
     @Composable
-    override fun NfcScreen(onNext: () -> Unit, onBack: () -> Unit) = standard.NfcScreen(onNext, onBack)
+    override fun NfcScreen(onNext: () -> Unit, onBack: () -> Unit) {
+        MyNfcScreen(onNext = onNext, onBack = onBack)
+    }
 
     @Composable
     override fun AgentCallScreen(onNext: () -> Unit, onBack: () -> Unit) = standard.AgentCallScreen(onNext, onBack)
