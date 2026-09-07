@@ -12,8 +12,8 @@ import com.identify.sdk.ui.standard.StandardUiProvider
  * [StandardUiProvider] instance'ı tutun, yalnızca değiştirmek istediğiniz ekran(lar)ı override edin,
  * geri kalan her ekranı tek satırlık bir çağrıyla ona delege edin.
  *
- * Bu demo [PreparationScreen] ve [SelfieScreen]'i override ediyor; diğer tüm ekranlar doğrudan
- * SDK'nın kendi UI'ına düşüyor.
+ * Bu demo [PreparationScreen], [SelfieScreen], [NfcScreen] ve [DocumentCombinedScreen]'i override
+ * ediyor; diğer tüm ekranlar doğrudan SDK'nın kendi UI'ına düşüyor.
  *
  * ---
  * ## `onNext` neden bazı metodlarda var, bazılarında yok?
@@ -101,9 +101,12 @@ class SampleUiProvider : SdkUiProvider {
     @Composable
     override fun DocumentSelectionScreen(onBack: () -> Unit) = standard.DocumentSelectionScreen(onBack)
 
+    // Özel — MyIdScreen'e bakın: SDK'nın gerçek DocumentScanViewModel'i (OCR + otomatik yakalama +
+    // instant upload) kendi ön/arka yüz panel ve tarama UI'ımızla nasıl kullanılır, orada gösteriliyor.
     @Composable
-    override fun DocumentCombinedScreen(onNext: () -> Unit, onBack: () -> Unit) =
-        standard.DocumentCombinedScreen(onNext, onBack)
+    override fun DocumentCombinedScreen(onNext: () -> Unit, onBack: () -> Unit) {
+        MyIdScreen(onNext = onNext, onBack = onBack)
+    }
 
     @Composable
     override fun OvdScreen(onBack: () -> Unit) = standard.OvdScreen(onBack)
