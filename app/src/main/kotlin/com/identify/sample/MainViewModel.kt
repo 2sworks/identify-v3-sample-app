@@ -242,7 +242,7 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
             .setSecretKeyBase64(BuildConfig.IDENTIFY_SECRET_KEY_BASE64)
             .setLoggerSecretKey(BuildConfig.IDENTIFY_LOGGER_SECRET_KEY)
             .setSocketSecretKey(BuildConfig.IDENTIFY_SOCKET_SECRET_KEY)
-            .setSslPins(sslPinsForCurrentBaseUrl())
+            //.setSslPins(sslPinsForCurrentBaseUrl())
 
         if (nfcDocumentNumber.value.isNotBlank() && nfcDateOfBirth.value.isNotBlank() && nfcDateOfExpiry.value.isNotBlank()) {
             builder.setNfcDependency(

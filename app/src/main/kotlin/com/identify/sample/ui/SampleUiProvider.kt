@@ -101,8 +101,9 @@ class SampleUiProvider : SdkUiProvider {
     @Composable
     override fun DocumentSelectionScreen(onBack: () -> Unit) = standard.DocumentSelectionScreen(onBack)
 
-    // Özel — MyIdScreen'e bakın: SDK'nın gerçek DocumentScanViewModel'i (OCR + otomatik yakalama +
-    // instant upload) kendi ön/arka yüz panel ve tarama UI'ımızla nasıl kullanılır, orada gösteriliyor.
+    // Özel — MySingleScreenIdScreen'e bakın: panele dönmeden, tek ekranda ön+arka yüz çekimi; tarama
+    // adımında çerçeve/ROI SDK'nın DocumentScanScreen'inden (docs/id-card-single-screen-capture.md).
+    // Panel'li (ön/arka kart seçimli) akış için MyIdScreen(...) çağırın.
     @Composable
     override fun DocumentCombinedScreen(onNext: () -> Unit, onBack: () -> Unit) {
         MyIdScreen(onNext = onNext, onBack = onBack)

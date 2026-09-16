@@ -99,8 +99,8 @@ import com.identify.sdk.ui.standard.scan.DocumentScanScreen
  * interface'inin sabit metod imzasını karşılamak için (bkz. [MyNfcScreen] için `SUCCESS` sonrası
  * `viewModel.onNextClicked()` çağrısı, orada da aynı şekilde).
  *
- * Bu ekranı denemek için [SampleUiProvider]'daki `DocumentCombinedScreen(...)` override'ını
- * `MyIdScreen(...)` çağırır hale getirmeniz yeterli.
+ * Bu ekranı denemek için [SampleUiProvider]'daki `DocumentCombinedScreen(...)` override'ında
+ * `MySingleScreenIdScreen(...)` yerine `MyIdScreen(...)` çağırın.
  *
  * ## Rehber çerçeve SDK'nın oranına/konumuna sabit mi kalmak zorunda?
  *

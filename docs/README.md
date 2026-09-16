@@ -10,4 +10,5 @@
 | [UI Özelleştirme](ui-customization.md) | SdkUiProvider ile kendi ekranlarınızı entegre etme, tema/renk özelleştirme |
 | [Hook Sistemi](hooks.md) | Akış adımları arasına özel ekranlar ekleme, `onIdentifyCancelled` dahil lifecycle callback'leri |
 | [OCR Entegrasyonu](ocr-integration.md) | Kimlik tarama modları ve yapılandırma |
+| [Kimlik — Tek Ekranda Ön + Arka Yüz](id-card-single-screen-capture.md) | `DocumentCombinedScreen` override'ında panele dönmeden, aynı kamera ekranında ön ve arka yüzü çekip gösterme |
 | [Yönlendirme Mesajları Rehberi](guidance-messages.md) | Tüm ekranlardaki sesli/yazılı yönlendirme mesajlarını özelleştirme (`provideGuidanceMessage`) ve TTS'i kapatma (`setTtsEnabled`) |
