@@ -9,20 +9,20 @@ SDK navigasyon hook sistemi, doğrulama akışındaki herhangi bir yerleşik mod
 - [Genel Bakış](#genel-bakış)
 - [Kullanılabilir Hook Noktaları](#kullanılabilir-hook-noktaları)
 - [API Referansı](#api-referansı)
-  - [setBeforeHook](#setbeforehook)
-  - [setAfterHook](#setafterhook)
-  - [onIdentifyFinished](#onidentifyfinished)
-  - [onIdentifyFailed](#onidentifyfailed)
-  - [onIdentifyCancelled](#onidentifycancelled)
-  - [provideErrorMessage](#provideerrormessage)
-  - [provideGuidanceMessage](#provideguidancemessage)
+    - [setBeforeHook](#setbeforehook)
+    - [setAfterHook](#setafterhook)
+    - [onIdentifyFinished](#onidentifyfinished)
+    - [onIdentifyFailed](#onidentifyfailed)
+    - [onIdentifyCancelled](#onidentifycancelled)
+    - [provideErrorMessage](#provideerrormessage)
+    - [provideGuidanceMessage](#provideguidancemessage)
 - [Kurulum](#kurulum)
 - [Örnekler](#örnekler)
-  - [Selfie öncesi kullanım koşulları](#selfie-öncesi-kullanım-koşulları)
-  - [Liveness sonrası analytics eventi](#liveness-sonrası-analytics-eventi)
-  - [Birden fazla hook](#birden-fazla-hook)
-  - [Özel bitiş ekranı](#özel-bitiş-ekranı)
-  - [Özel hata mesajları](#özel-hata-mesajları)
+    - [Selfie öncesi kullanım koşulları](#selfie-öncesi-kullanım-koşulları)
+    - [Liveness sonrası analytics eventi](#liveness-sonrası-analytics-eventi)
+    - [Birden fazla hook](#birden-fazla-hook)
+    - [Özel bitiş ekranı](#özel-bitiş-ekranı)
+    - [Özel hata mesajları](#özel-hata-mesajları)
 - [Çalışma Sırası](#çalışma-sırası)
 - [Önemli Notlar](#önemli-notlar)
 
@@ -63,6 +63,7 @@ Hook ekleyebileceğiniz tüm rotalar:
 | `SdkRoutes.OtherDocument` | Diğer belge türleri tarama |
 | `SdkRoutes.Nfc` | NFC çip okuma |
 | `SdkRoutes.Selfie` | Selfie çekimi |
+| `SdkRoutes.SelfieWithLiveness` | Canlılık kontrollü selfie (iki fazlı oval) |
 | `SdkRoutes.Liveness` | Canlılık tespiti |
 | `SdkRoutes.AgentCall` | Operatörle canlı görüntülü görüşme |
 | `SdkRoutes.VideoRecord` | Video kaydı |

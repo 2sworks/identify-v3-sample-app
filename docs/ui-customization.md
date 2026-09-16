@@ -26,12 +26,13 @@ IdentifyActivity
     ├─ uiProvider.HandshakeScreen(identificationId, onSuccess, onFailure)
     ├─ uiProvider.IntroScreen(onNext)
     ├─ uiProvider.SelfieScreen(onNext, onBack)
+    ├─ uiProvider.SelfieWithLivenessScreen(onNext, onBack)
     ├─ uiProvider.LivenessScreen(onNext, onBack)
     └─ uiProvider.ResultSuccessScreen(onFinish)
 ```
 
 `onNext` → SDK bir sonraki modüle geçer  
-`onBack` → SDK bir önceki ekrana döner  
+`onBack` → SDK bir önceki ekrana döner
 
 Tüm backend iletişimi, upload, socket, navigasyon SDK içinde kalır. Müşteri sadece UI katmanını kontrol eder.
 
@@ -275,7 +276,7 @@ class FullCustomUiProvider : SdkUiProvider {
 
 ## Modül Seçimi ve Ekranların Tetiklenmesi
 
-`SdkUiProvider` implementasyonunuzda tanımlı 17 metod **sabittir** — hangi modülleri kullandığınızdan bağımsız olarak hepsini yazmak zorundasınız (derleme şartı). Ancak akış sırasında **gerçekte hangi ekranın çağrılacağı**, `SdkConfig.Builder().setCustomModules(List<SdkModule>)` ile verdiğiniz modül listesine bağlıdır. Bu listeye dahil etmediğiniz modüllerin ekranları hiçbir koşulda tetiklenmez.
+`SdkUiProvider` implementasyonunuzda tanımlı 18 metod **sabittir** — hangi modülleri kullandığınızdan bağımsız olarak hepsini yazmak zorundasınız (derleme şartı). Tek istisna `SelfieWithLivenessScreen`'dir: geriye dönük uyumluluk için varsayılan bir gövdesi vardır, override etmezseniz derleme kırılmaz ama `SdkModule.SELFIE_WITH_LIVENESS` akışa dahil edildiğinde modül **atlanır** (uyarı loglanır). Ancak akış sırasında **gerçekte hangi ekranın çağrılacağı**, `SdkConfig.Builder().setCustomModules(List<SdkModule>)` ile verdiğiniz modül listesine bağlıdır. Bu listeye dahil etmediğiniz modüllerin ekranları hiçbir koşulda tetiklenmez.
 
 ### Her zaman çalışan ekranlar (modülden bağımsız)
 
@@ -294,6 +295,7 @@ Aşağıdaki 3 ekran, `setCustomModules` listenizde ne olursa olsun akışın st
 | `SdkModule.ID_CARD` | `DocumentSelectionScreen` + kullanıcının seçimine göre `DocumentCombinedScreen` / `PassportScreen` / `OtherDocumentScreen` |
 | `SdkModule.ID_CARD_OVD` | Yalnızca `OvdScreen` (ön → hologram → arka, sabit akış) |
 | `SdkModule.SELFIE` | `SelfieScreen` |
+| `SdkModule.SELFIE_WITH_LIVENESS` | `SelfieWithLivenessScreen` |
 | `SdkModule.NFC` | `NfcScreen` |
 | `SdkModule.LIVENESS` | `LivenessScreen` |
 | `SdkModule.SPEECH` | `SpeechScreen` |
@@ -338,6 +340,7 @@ Factory, SDK'nın repository/session/navigator/socket bağımlılıklarını oto
 | `DocumentCombinedScreen` | `DocumentScanViewModel` | `viewModel.cameraAnalyzer` |
 | `OvdScreen` | `OvdViewModel` | `viewModel.docCameraAnalyzer` / `viewModel.ovdCameraAnalyzer` |
 | `SelfieScreen` | `SelfieViewModel` | `viewModel.cameraAnalyzer` |
+| `SelfieWithLivenessScreen` | `SelfieWithLivenessViewModel` | `viewModel.cameraAnalyzer` |
 | `PassportScreen` | `PassportScanViewModel` | `viewModel.cameraAnalyzer` |
 | `NfcScreen` | `NfcViewModel` | — (NFC tag listener) |
 | `AgentCallScreen` | `AgentCallViewModel` | — |
@@ -414,7 +417,7 @@ override fun SelfieScreen(onNext: () -> Unit, onBack: () -> Unit) {
             onRetry    = { viewModel.onRetry() }
         )
         SelfieState.UPLOADING -> LoadingOverlay()
-        SelfieState.COMPLETED -> { /* SDK otomatik ilerler */ }
+        SelfieState.COMPLETED -> { /* onNext() çağırın — aşağıdaki nota bakın */ }
     }
 
     state.errorMessage?.let {
@@ -425,6 +428,68 @@ override fun SelfieScreen(onNext: () -> Unit, onBack: () -> Unit) {
     }
 }
 ```
+
+> **İlerlemeyi ekran tetikler.** `SelfieViewModel` modül bitince akışı kendisi ilerletmez;
+> `selfieState == COMPLETED` olduğunda `onNext()` çağırmanız gerekir — çağırmazsanız akış selfie
+> ekranında takılır. Hazır UI bunu şöyle yapar:
+>
+> ```kotlin
+> LaunchedEffect(Unit) {
+>     snapshotFlow { viewModel.uiState.value.selfieState }
+>         .filter { it == SelfieState.COMPLETED }
+>         .first()
+>     onNext()
+> }
+> ```
+
+---
+
+### SelfieWithLivenessViewModel
+
+```kotlin
+val viewModel: SelfieWithLivenessViewModel = viewModel(factory = SdkViewModelFactory)
+val state by viewModel.uiState  // SelfieWithLivenessViewModel.SelfieWithLivenessUiState
+```
+
+İki fazlı akış: kullanıcı önce **küçük**, sonra **büyük** ovale yüzünü oturtup her fazda
+`holdDurationMs` kadar sabit tutar. İkinci faz bitince kare `type=selfie` + `with_liveness=true`
+ile yüklenir.
+
+| Alan | Tip | Açıklama |
+|------|-----|----------|
+| `stage` | `SelfieWithLivenessStage` | `ALIGNING` / `UPLOADING` / `VERIFIED` |
+| `phase` | `SelfieWithLivenessPhase` | `SMALL` / `LARGE` — aktif oval |
+| `ovalRect` | `RectF?` | Aktif ovalin ekran koordinatları (overlay çizimi için) |
+| `instruction` | `FaceGuideInstruction` | `NO_FACE` / `MOVE_CLOSER` / `HOLD_STILL` vb. |
+| `guidanceMessage` | `String` | Kullanıcıya gösterilecek çözümlenmiş metin |
+| `holdProgress` | `Float` | Sabit tutma ilerlemesi, 0f–1f |
+| `isAligned` | `Boolean` | Yüz aktif ovale oturmuş mu |
+| `meshPoints` | `List<FaceMeshPoint>` | Yüz ağı noktaları (overlay için) |
+| `frameAspectRatio` | `Float` | Kamera karesinin en/boy oranı |
+| `prompt` | `SelfieWithLivenessPrompt` | `NONE` / `RETRY` / `FAILURE` — karşılaştırma diyaloğu |
+| `errorMessage` | `String?` | Ağ / sunucu hatası |
+| `isCompleted` | `Boolean` | Modül tamamlandı |
+
+**Public Metodlar:**
+
+| Metod | Ne Zaman Çağrılır |
+|-------|-------------------|
+| `setViewport(width, height, topInset, bottomInset)` | Ekran yerleştiğinde (ör. `onSizeChanged`) — **zorunlu** |
+| `onRetry()` | `RETRY` diyaloğunda kullanıcı tekrar denediğinde |
+| `clearError()` | Hata dialogu kapatıldığında |
+| `onFailureAcknowledged()` | `FAILURE` diyaloğu onaylandığında |
+| `onBackPress()` | Geri tuşuna basıldığında |
+
+Kamera bağlantısı: `viewModel.cameraAnalyzer`
+
+İlerlemeyi ekran tetikler: `isCompleted` `true` olduğunda `onNext()` çağırın.
+
+> **`setViewport` zorunludur.** Ovaller ekran ölçülerinden hesaplanır; çağırmazsanız `ovalRect`
+> `null` kalır ve hizalama hiç başlamaz. Ekranınız yerleştiğinde (ör. `onSizeChanged`) çağırın.
+
+> **Deneme hakkı:** yüz karşılaştırması başarısız olursa hak düşülür — hak kaldıkça `RETRY`,
+> tükendiğinde `FAILURE` gösterilir. Ağ/sunucu hataları haktan **düşmez**, yalnızca
+> `errorMessage` dolar.
 
 ---
 
@@ -509,15 +574,59 @@ val state by viewModel.uiState  // LivenessViewModel.LivenessUiState
 
 | Alan | Tip | Açıklama |
 |------|-----|----------|
-| `currentStep` | `LivenessStep` | `TURN_RIGHT` / `TURN_LEFT` / `SMILE` / `BLINK` |
+| `currentStep` | `LivenessStep` | `TURN_RIGHT` / `TURN_LEFT` / `SMILE` / `BLINK` / `COMPLETED` |
 | `isFaceDetected` | `Boolean` | Yüz algılandı mı |
+| `guidanceMessage` | `String` | Kullanıcıya gösterilecek çözümlenmiş adım talimatı |
 | `yaw` | `Float` | Baş sol/sağ dönüş açısı |
 | `isUploading` | `Boolean` | Adım yükleniyor |
 | `errorMessage` | `String?` | Hata metni |
 | `comparisonWarning` | `String?` | Adım uyarısı |
+| `comparisonWarningCount` | `Int` | Gösterilen uyarı sayısı |
 
-**Public Metodlar:** `clearError()`, `clearComparisonWarning()`, `onBackPress()`  
+**Public Metodlar:**
+
+| Metod | Ne Zaman Çağrılır |
+|-------|-------------------|
+| `clearError()` | Hata dialogu kapatıldığında |
+| `clearComparisonWarning()` | Uyarı dialogu kapatıldığında |
+| `onBackPress(): Boolean` | Geri tuşuna basıldığında. `true` = önceki liveness adımına dönüldü, ekranda kalın; `false` = tüketilecek adım kalmadı, `onBack()` çağırın |
+
 Kamera bağlantısı: `viewModel.cameraAnalyzer`
+
+**Örnek akış:**
+
+```kotlin
+@Composable
+override fun LivenessScreen(onNext: () -> Unit, onBack: () -> Unit) {
+    val viewModel: LivenessViewModel = viewModel(factory = SdkViewModelFactory)
+    val state by viewModel.uiState
+
+    // Modül tamamlandığında ilerlemeyi EKRAN tetikler
+    LaunchedEffect(Unit) {
+        snapshotFlow { viewModel.uiState.value.currentStep }
+            .filter { it == LivenessStep.COMPLETED }
+            .first()
+        onNext()
+    }
+
+    // Liveness çok adımlı: önce kendi adımları arasında geriye gider
+    BackHandler { if (!viewModel.onBackPress()) onBack() }
+
+    CameraPreviewWithGuide(
+        analyzer       = viewModel.cameraAnalyzer,
+        instruction    = state.guidanceMessage,
+        isFaceDetected = state.isFaceDetected
+    )
+    if (state.isUploading) LoadingOverlay()
+
+    state.errorMessage?.let {
+        ErrorDialog(message = it, onDismiss = { viewModel.clearError() })
+    }
+    state.comparisonWarning?.let {
+        WarningDialog(message = it, onDismiss = { viewModel.clearComparisonWarning() })
+    }
+}
+```
 
 **Not:** Liveness akışı artık oval/çerçeve konum hizalaması istemez — yüz herhangi bir konumda
 algılandığı sürece adım talimatı (`sağa dönün` vb.) geçerlidir ve gerçek kural (yaw/gülümseme/göz

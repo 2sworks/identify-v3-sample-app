@@ -136,8 +136,16 @@ class SampleUiProvider : SdkUiProvider {
     override fun AddressScreen(onNext: () -> Unit, onBack: () -> Unit, initialAddress: String?) =
         standard.AddressScreen(onNext, onBack, initialAddress)
 
+    // Özel — MyLivenessScreen'e bakın: SDK'nın gerçek LivenessViewModel'i (yüz analizi + adım adım
+    // otomatik upload) kendi adım göstergemiz ve talimat panelimizle nasıl kullanılır, orada
+    // gösteriliyor.
+    //
+    // SelfieWithLivenessScreen (SdkModule.SELFIE_WITH_LIVENESS) override edilmiyor: interface'te
+    // varsayılan gövdesi var, bu demo o modülü kullanmıyor.
     @Composable
-    override fun LivenessScreen(onNext: () -> Unit, onBack: () -> Unit) = standard.LivenessScreen(onNext, onBack)
+    override fun LivenessScreen(onNext: () -> Unit, onBack: () -> Unit) {
+        MyLivenessScreen(onNext = onNext, onBack = onBack)
+    }
 
     @Composable
     override fun SignatureScreen(onNext: () -> Unit, onBack: () -> Unit) = standard.SignatureScreen(onNext, onBack)
