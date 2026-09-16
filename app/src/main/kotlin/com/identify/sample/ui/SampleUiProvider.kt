@@ -130,8 +130,13 @@ class SampleUiProvider : SdkUiProvider {
         MyNfcScreen(onNext = onNext, onBack = onBack)
     }
 
+    // Özel — MyAgentCallScreen'e bakın: SDK'nın gerçek AgentCallViewModel'i (kuyruk, WebRTC
+    // sinyalleşmesi, ses cihazı yönetimi) kendi bekleme/çağrı/görüşme panellerimizle nasıl
+    // kullanılır, orada gösteriliyor.
     @Composable
-    override fun AgentCallScreen(onNext: () -> Unit, onBack: () -> Unit) = standard.AgentCallScreen(onNext, onBack)
+    override fun AgentCallScreen(onNext: () -> Unit, onBack: () -> Unit) {
+        MyAgentCallScreen(onNext = onNext, onBack = onBack)
+    }
 
     @Composable
     override fun AddressScreen(onNext: () -> Unit, onBack: () -> Unit, initialAddress: String?) =

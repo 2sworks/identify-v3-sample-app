@@ -73,6 +73,10 @@ dependencies {
     implementation("androidx.camera:camera-core:1.5.2")
     implementation("androidx.camera:camera-view:1.5.2")
 
+    // Aynı sebeple WebRTC: MyAgentCallScreen.kt, SDK'nın VideoRenderer'ına VideoTrack/EglBase
+    // tipleriyle referans veriyor. Sürüm sdk-core'un runtime'a getirdiğiyle eşleştirildi.
+    implementation("io.github.webrtc-sdk:android:137.7151.05")
+
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
