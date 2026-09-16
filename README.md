@@ -5,9 +5,6 @@ Identify SDK'nın public API'sini nasıl çağırması gerektiğini gösterir �
 initialization, doğrulama akışını başlatma, modül seçimi, hook'lar — böylece entegratörler
 tahmin etmek yerine gerçek, çalışan çağrı desenlerini kopyalayabilir.
 
-SDK'nın implementasyonu (`sdk-core`, `sdk-ui-default`, `sdk-ui-colendi`) bu repoda **yer
-almaz**. Tıpkı herhangi bir partner uygulamanın tüketeceği şekilde, GitHub Packages
-üzerinden derlenmiş bir Maven bağımlılığı olarak tüketilir.
 
 ---
 
