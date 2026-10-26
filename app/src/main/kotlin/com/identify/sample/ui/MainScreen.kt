@@ -403,12 +403,17 @@ fun InputField(
 fun OptionsBottomSheet(viewModel: MainViewModel, onDismiss: () -> Unit) {
     val useHookDemo by viewModel.useHookDemo.collectAsState()
     val useCustomUiProvider by viewModel.useCustomUiProvider.collectAsState()
+    val useCustomErrors by viewModel.useCustomErrors.collectAsState()
+    val useCustomTts by viewModel.useCustomTts.collectAsState()
 
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Color.White) {
+        // Seçenekler ekrana sığmayabilir: kaydırılabilir + alt gezinme çubuğunun üstünde bitsin.
         Column(
             modifier = Modifier
-                .padding(24.dp)
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(24.dp)
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text("Seçenekleri Yönet", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -429,6 +434,16 @@ fun OptionsBottomSheet(viewModel: MainViewModel, onDismiss: () -> Unit) {
                 checked = useCustomUiProvider,
                 onCheckedChange = { viewModel.toggleCustomUiProvider() }
             )
+            OptionSwitch(
+                label = "Özel hata mesajları (anahtara göre, TR/EN)",
+                checked = useCustomErrors,
+                onCheckedChange = { viewModel.toggleCustomErrors() }
+            )
+            OptionSwitch(
+                label = "Özel TTS (yönlendirme metni + ses ayarı)",
+                checked = useCustomTts,
+                onCheckedChange = { viewModel.toggleCustomTts() }
+            )
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -445,7 +460,15 @@ fun OptionSwitch(label: String, checked: Boolean, onCheckedChange: (Boolean) -> 
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, color = Color.Gray, fontSize = 14.sp)
+        // weight: uzun etiket alt satıra geçsin, switch sağda sabit kalsın.
+        Text(
+            label,
+            color = Color.Gray,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 12.dp)
+        )
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

@@ -11,6 +11,8 @@ SDK akışındaki hemen her ekran, kullanıcıyı hem **ekranda yazıyla** hem *
 - [Nasıl Çalışır](#nasıl-çalışır)
 - [Mesajları Özelleştirme (`provideGuidanceMessage`)](#mesajları-özelleştirme-provideguidancemessage)
 - [Sesi Tamamen Kapatma (`setTtsEnabled`)](#sesi-tamamen-kapatma-settsenabled)
+- [Sesi Ayarlama (`setSpeechConfig`)](#sesi-ayarlama-setspeechconfig)
+- [Kendi Ses Kayıtlarınızı Çalma (`SdkSpeechEngine`)](#kendi-ses-kayıtlarınızı-çalma-sdkspeechengine)
 - [Tüm Mesajlar — Modül Modül Referans](#tüm-mesajlar--modül-modül-referans)
   - [OCR (Kimlik Kartı Tarama)](#ocr-kimlik-kartı-tarama)
   - [OVD (Hologram Doğrulama)](#ovd-hologram-doğrulama)
@@ -90,6 +92,63 @@ SdkConfig.Builder(baseUrl, turnKey)
 ```
 
 Bkz. [SdkConfig Referansı — Ses](sdk-config.md#ses).
+
+---
+
+## Sesi Ayarlama (`setSpeechConfig`)
+
+*3.6.1+.* `provideGuidanceMessage` **ne** okunacağını, `SdkSpeechConfig` ise **nasıl** okunacağını belirler. Tüm alanlar isteğe bağlıdır.
+
+```kotlin
+import com.identify.sdk.speech.SdkSpeechConfig
+
+SdkConfig.Builder(baseUrl, turnKey)
+    .setSpeechConfig(
+        SdkSpeechConfig(
+            speechRate = 0.95f,                       // 1.0 normal
+            pitch = 1.0f,                             // ses tonu, 1.0 normal
+            voiceName = "tr-tr-x-ama-local",          // Voice.getName(); cihazda yoksa varsayılan ses
+            ttsEnginePackage = "com.google.android.tts", // null = cihaz varsayılanı
+            disabledScreens = setOf(SdkScreen.INTRO), // bu ekranlarda ses kapalı, yazı etkilenmez
+            engine = null,                            // kendi ses motorunuz (aşağıya bakın)
+        )
+    )
+    .build()
+```
+
+`voiceName`'i seçili dile uygun verin; TR bir sesle EN metin okutmak doğal durmaz.
+
+---
+
+## Kendi Ses Kayıtlarınızı Çalma (`SdkSpeechEngine`)
+
+*3.6.1+.* `SdkSpeechConfig.engine` ile her mesajı önce kendi motorunuza sorabilirsiniz. `speak` `true` dönerse mesajı siz çaldınız, SDK'nın TTS'i konuşmaz. `false` dönerse (ya da istisna fırlarsa) SDK kendi TTS'iyle okur.
+
+```kotlin
+class MySpeechEngine(private val context: Context) : SdkSpeechEngine {
+    private var player: MediaPlayer? = null
+
+    override fun speak(request: SpeechRequest): Boolean {
+        // Kaydı metne değil anahtara bağlayın: metin dile/override'a göre değişir, anahtar değişmez.
+        val resId = when (request.key) {
+            GuidanceMessageKey.LIVENESS_SMILE ->
+                if (request.language == SdkLanguage.TR) R.raw.liveness_smile_tr else R.raw.liveness_smile_en
+            else -> return false // kaydı yoksa SDK okusun
+        }
+        stop()
+        player = MediaPlayer.create(context, resId)?.apply { start() }
+        return player != null
+    }
+
+    override fun stop() { player?.release(); player = null }
+}
+```
+
+`SpeechRequest` alanları: `key` (`GuidanceMessageKey`), `text`, `screen` (`SdkScreen`), `language` (`SdkLanguage`), `priority`.
+
+Elle bir metin seslendirmek için: `IdentifySdk.speak(text, screen, priority)`; durdurmak için `IdentifySdk.stopSpeaking()`.
+
+Metin + ses özelleştirmesinin çalışan tam örneği: sample app'te `app/src/main/kotlin/com/identify/sample/CustomMessagesSample.kt` (Seçenekler → "Özel TTS").
 
 ---
 

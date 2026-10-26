@@ -80,6 +80,7 @@ SdkConfig.Builder(baseUrl, turnKey)
 | Metod | Varsayılan | Açıklama |
 |---|---|---|
 | `setTtsEnabled(Boolean)` | `true` | OCR, OVD ve diğer tüm akışlardaki sesli yönlendirmeyi (TTS) açar/kapatır. `false` yapılırsa ekrandaki yazılı yönlendirme mesajları (`guidanceMessage`) etkilenmez, yalnızca ses kapanır. Mesajların tam listesi için bkz. [OCR Entegrasyonu — Sesli Yönlendirme Mesajları](ocr-integration.md#sesli-yönlendirme-mesajları). |
+| `setSpeechConfig(SdkSpeechConfig)` | `SdkSpeechConfig()` | *3.6.1+.* TTS hızı, tonu, ses adı, motoru, sesin kapalı olacağı ekranlar ve isteğe bağlı kendi ses motorunuz (`SdkSpeechEngine`). Bkz. [Yönlendirme Mesajları — Sesi Ayarlama](guidance-messages.md#sesi-ayarlama-setspeechconfig). |
 
 ```kotlin
 SdkConfig.Builder(baseUrl, turnKey)

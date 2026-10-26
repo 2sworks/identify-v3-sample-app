@@ -17,7 +17,7 @@ val localProperties = Properties().apply {
 fun secret(envKey: String, propKey: String): String =
     System.getenv(envKey) ?: localProperties.getProperty(propKey) ?: ""
 
-val identifySdkVersion = (project.findProperty("identify.sdk.version") as? String) ?: "3.5.5"
+val identifySdkVersion = (project.findProperty("identify.sdk.version") as? String) ?: "3.6.1"
 
 android {
     namespace = "com.identify.sample"

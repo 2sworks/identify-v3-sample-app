@@ -15,6 +15,8 @@ SDK navigasyon hook sistemi, doğrulama akışındaki herhangi bir yerleşik mod
     - [onIdentifyFailed](#onidentifyfailed)
     - [onIdentifyCancelled](#onidentifycancelled)
     - [provideErrorMessage](#provideerrormessage)
+    - [provideErrorMessageByKey](#provideerrormessagebykey)
+    - [onError](#onerror)
     - [provideGuidanceMessage](#provideguidancemessage)
 - [Kurulum](#kurulum)
 - [Örnekler](#örnekler)
@@ -176,6 +178,49 @@ var provideErrorMessage: ((code: Int?, message: String?, throwable: Throwable?) 
 | `throwable` | `Throwable?` | Varsa altta yatan exception |
 
 **Kapsam:** OVD ekranındaki (kimlik ön/OVD/arka yükleme) comparison uyarıları ve güvenlik öğesi (OVI) tespit edilemedi hatası da bu hook'tan geçer — `code=200`, `message` backend'in `messages` alanı veya SDK'nın varsayılan şablonu, `throwable=null`. OVI hatası özelinde SDK bu mesajı retry sayacına dahil etmez ve force-accept etmez; kullanıcı backend başarı dönene kadar adımı tekrar denemek zorundadır.
+
+> Yeni entegrasyonlarda [provideErrorMessageByKey](#provideerrormessagebykey) önerilir. İkisi de atanmışsa önce `provideErrorMessageByKey` sorulur; `null` dönerse `provideErrorMessage`'a düşülür.
+
+---
+
+### provideErrorMessageByKey
+
+*3.6.1+.* Hata metnini HTTP kodu yerine sabit bir anahtara göre değiştirmenizi sağlar. Metin döndürürseniz o gösterilir; `null` döndürürseniz SDK'nın varsayılan metni kalır.
+
+```kotlin
+var provideErrorMessageByKey: ((error: SdkError) -> String?)? = null
+```
+
+**`SdkError` alanları** (`com.identify.sdk.core.model.SdkError`)
+
+| Alan | Tip | Açıklama |
+|---|---|---|
+| `key` | `SdkErrorKey` | Hatanın türü (ör. `CONNECTION_ERROR`, `COMPARISON_FAILED`, `NFC_CONNECTION_LOST`) |
+| `screen` | `SdkScreen` | Hatanın geldiği ekran (ör. `LIVENESS`, `ID_CARD`, `NFC`) |
+| `message` | `String` | Gösterilecek nihai metin (override uygulandıktan sonra) |
+| `defaultMessage` | `String` | SDK'nın varsayılan metni |
+| `code` | `Int?` | Sunucu hatalarında HTTP durum kodu |
+| `cause` | `Throwable?` | Varsa altta yatan exception |
+
+**`SdkErrorKey` değerleri:** `DOCUMENT_NOT_DETECTED`, `DOCUMENT_CONTENT_MISSING`, `COMPARISON_FAILED`, `OVD_SECURITY_ELEMENT_FAILED`, `NFC_WRONG_MRZ_DATA`, `NFC_AUTH_FAILED`, `NFC_CONNECTION_LOST`, `NFC_NOT_AVAILABLE`, `NFC_DISABLED`, `NFC_MAX_RETRIES_REACHED`, `VIDEO_SPEECH_VERIFY_FAILED`, `VIDEO_RECORDING_FAILED`, `SPEECH_RECOGNITION_FAILED`, `CALL_CONNECTION_LOST`, `CALL_MISSED`, `SESSION_NOT_FOUND`, `SERVER_ERROR`, `CONNECTION_ERROR`, `UNEXPECTED_ERROR`.
+
+Aynı anahtar birden fazla ekranda kullanılabilir (ör. `COMPARISON_FAILED` kimlik, selfie ve canlılıkta). Ekrana göre farklı metin için `error.screen`'e bakın. Örnek için bkz. [Özel hata mesajları](#özel-hata-mesajları).
+
+---
+
+### onError
+
+*3.6.1+.* Her hatada çağrılır; metni değiştirmez, akışı etkilemez. Analitik, loglama veya hatayı seslendirmek için kullanılır. Aynı olaylar `IdentifySdk.errors` (`SharedFlow<SdkError>`) üzerinden de dinlenebilir.
+
+```kotlin
+var onError: ((error: SdkError) -> Unit)? = null
+```
+
+SDK hataları kendiliğinden seslendirmez. Seslendirmek isterseniz:
+
+```kotlin
+onError = { error -> IdentifySdk.speak(error.message, error.screen, true) } // true = öncelikli
+```
 
 ---
 
@@ -346,6 +391,28 @@ val hooks = SdkHooks().apply {
     }
 }
 ```
+
+Anahtara göre (3.6.1+, önerilen) — yalnızca istediğiniz hataları değiştirin, gerisi için `null` dönün:
+
+```kotlin
+val hooks = SdkHooks().apply {
+    provideErrorMessageByKey = { error ->
+        when (error.key) {
+            SdkErrorKey.CONNECTION_ERROR -> "İnternet bağlantınızı kontrol edip tekrar deneyin."
+            SdkErrorKey.NFC_CONNECTION_LOST -> "Çip okunamadı. Kartı telefonun arkasına sabit tutun."
+            // Ekrana göre dallanma: yüz doğrulamada özel metin, belgede SDK metni
+            SdkErrorKey.COMPARISON_FAILED -> when (error.screen) {
+                SdkScreen.LIVENESS, SdkScreen.SELFIE -> "Yüzünüzü doğrulayamadık. Lütfen tekrar deneyin."
+                else -> null
+            }
+            else -> null
+        }
+    }
+    onError = { error -> Log.d("Errors", "key=${error.key} screen=${error.screen}") }
+}
+```
+
+Çok dilli tam örnek: sample app'te `app/src/main/kotlin/com/identify/sample/CustomMessagesSample.kt` (Seçenekler → "Özel hata mesajları").
 
 ---
 

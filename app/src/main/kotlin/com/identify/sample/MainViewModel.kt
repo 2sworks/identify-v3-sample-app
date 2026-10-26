@@ -67,6 +67,28 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
         _useCustomUiProvider.value = !_useCustomUiProvider.value
     }
 
+    /**
+     * Anahtarlı hata mesajı özelleştirme demosu — bkz. [installCustomErrorMessages] ve
+     * [installErrorListener] (CustomMessagesSample.kt). Kapalıyken SDK varsayılan metinleri kalır.
+     */
+    private val _useCustomErrors = MutableStateFlow(false)
+    val useCustomErrors = _useCustomErrors.asStateFlow()
+
+    fun toggleCustomErrors() {
+        _useCustomErrors.value = !_useCustomErrors.value
+    }
+
+    /**
+     * TTS metin + ses özelleştirme demosu — bkz. [installCustomGuidanceTexts] ve
+     * [sampleSpeechConfig] (CustomMessagesSample.kt). Kapalıyken SDK varsayılan TTS'i kalır.
+     */
+    private val _useCustomTts = MutableStateFlow(false)
+    val useCustomTts = _useCustomTts.asStateFlow()
+
+    fun toggleCustomTts() {
+        _useCustomTts.value = !_useCustomTts.value
+    }
+
     // Form Alanları
     val name = MutableStateFlow("")
     val surname = MutableStateFlow("")
@@ -254,6 +276,14 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
             )
         }
 
+        // TTS sesi (hız/ton/ses/motor) — "Özel TTS" toggle'ı açıkken. Kapalıyken SDK varsayılanı.
+        Timber.i("startProcess: useCustomErrors=%s useCustomTts=%s", _useCustomErrors.value, _useCustomTts.value)
+        if (_useCustomTts.value) {
+            builder
+                .setTtsEnabled(true)
+                .setSpeechConfig(sampleSpeechConfig(activity, _currentLanguage.value))
+        }
+
         val config = builder.build()
 
         // 2. Hook'lar — SdkHooks'un tüm yeteneklerini kapsayan referans kullanım (docs/hooks.md).
@@ -317,6 +347,19 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
             }
         } else {
             SdkHooks()
+        }
+
+        // Hata ve TTS metni örnekleri (CustomMessagesSample.kt). Hook Demo ile birlikte açılabilir:
+        // provideErrorMessageByKey, eski provideErrorMessage'tan önce sorulur; null dönerse ona
+        // düşer. installCustomGuidanceTexts de override etmediği anahtarları önceki hook'a devreder.
+        hooks.apply {
+            if (_useCustomErrors.value) {
+                installCustomErrorMessages(_currentLanguage.value)
+                installErrorListener(speakErrors = _useCustomTts.value)
+            }
+            if (_useCustomTts.value) {
+                installCustomGuidanceTexts(_currentLanguage.value)
+            }
         }
         Timber.i("startProcess: built hooks instance=%s", System.identityHashCode(hooks))
 
