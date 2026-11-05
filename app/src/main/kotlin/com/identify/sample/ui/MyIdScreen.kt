@@ -57,7 +57,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.identify.sdk.IdentifySdk
 import com.identify.sdk.core.di.SdkViewModelFactory
+import com.identify.sdk.core.model.SdkErrorKey
 import com.identify.sdk.presentation.scan.DocumentScanViewModel
 import com.identify.sdk.presentation.selfie.CameraPreview
 import com.identify.sdk.ui.standard.scan.DocumentScanScreen
@@ -229,16 +231,26 @@ private fun IdScreenBase(
     }
 
     uiState.comparisonErrors?.let { errors ->
+        // İnternet kesintisinde başlık, metin ve düğme değişir; diğer hatalarda pencere aynı kalır.
+        val connectionLost = errors.any { IdentifySdk.errorKeyOf(it) == SdkErrorKey.CONNECTION_ERROR }
         AlertDialog(
-            onDismissRequest = { viewModel.clearErrors() },
-            title = { Text("Doğrulama Hatası") },
+            onDismissRequest = { viewModel.retryCurrentSide() },
+            title = { Text(if (connectionLost) "İnternet Bağlantısı Kesildi" else "Doğrulama Hatası") },
             text = {
-                Column {
-                    errors.forEach { error -> Text("• $error") }
+                if (connectionLost) {
+                    Text("İnternet bağlantınızı kontrol edip tekrar deneyin.")
+                } else {
+                    Column {
+                        errors.forEach { error -> Text("• $error") }
+                    }
                 }
             },
             confirmButton = {
-                TextButton(onClick = { viewModel.clearErrors() }) { Text("Tamam") }
+                // Yükleme hatası yüzü "yükleniyor"da bırakır; clearErrors yetmez, retryCurrentSide yüzü yeniden çekime açar.
+                TextButton(onClick = {
+                    viewModel.retryCurrentSide()
+                    if (connectionLost) showCamera = true
+                }) { Text(if (connectionLost) "Tekrar Dene" else "Tamam") }
             }
         )
     }

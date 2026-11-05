@@ -47,7 +47,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.identify.sdk.IdentifySdk
 import com.identify.sdk.core.di.SdkViewModelFactory
+import com.identify.sdk.core.model.SdkErrorKey
 import com.identify.sdk.presentation.scan.DocumentScanViewModel
 import com.identify.sdk.presentation.scan.DocumentScanViewModel.CaptureMode
 import com.identify.sdk.presentation.scan.DocumentScanViewModel.CaptureState
@@ -264,15 +266,20 @@ fun MySingleScreenIdScreen(onNext: () -> Unit, onBack: () -> Unit) {
     }
 
     uiState.comparisonErrors?.let { errors ->
+        // İnternet kesintisinde başlık, metin ve düğme değişir; diğer hatalarda pencere aynı kalır.
+        val connectionLost = errors.any { IdentifySdk.errorKeyOf(it) == SdkErrorKey.CONNECTION_ERROR }
         AlertDialog(
             onDismissRequest = {},
-            title = { Text("Doğrulama Hatası") },
-            text = { Column { errors.forEach { Text("• $it") } } },
+            title = { Text(if (connectionLost) "İnternet Bağlantısı Kesildi" else "Doğrulama Hatası") },
+            text = {
+                if (connectionLost) Text("İnternet bağlantınızı kontrol edip tekrar deneyin.")
+                else Column { errors.forEach { Text("• $it") } }
+            },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.clearErrors()
                     startSide(mode)
-                }) { Text("Tekrar Çek") }
+                }) { Text(if (connectionLost) "Tekrar Dene" else "Tekrar Çek") }
             }
         )
     }
