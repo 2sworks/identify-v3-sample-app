@@ -49,7 +49,7 @@ SDK içe aktarıldığında aşağıdaki kütüphaneler **otomatik olarak** proj
 | `com.squareup.okhttp3:okhttp` | `5.3.2` |
 | `com.squareup.okhttp3:logging-interceptor` | `5.3.2` |
 
-> OkHttp **5.x** kullanılmaktadır. Projenizde OkHttp 4.x bağımlılığı varsa Gradle en yüksek sürümü (5.x) seçecektir — geriye uyumlu olmakla birlikte test edilmesi önerilir.
+> OkHttp **5.x** kullanılmaktadır. Projenizde OkHttp 4.x bağımlılığı varsa Gradle en yüksek sürümü (5.x) seçecektir — geriye uyumlu olmakla birlikte test edilmesi önerilir. OkHttp'nin diğer modülleri kendiliğinden yükselmez (SDK 3.6.2'den itibaren `okhttp-urlconnection` hariç), bkz. [OkHttp 4.x → 5.x](#okhttp-4x--5x).
 
 ### Kamera & Görüntü İşleme
 
@@ -149,15 +149,17 @@ android {
 
 Gradle en yüksek sürümü (5.x) seçer. OkHttp 5.x büyük ölçüde geriye uyumludur ancak bazı deprecated API'ler kaldırılmıştır. Kendi kodunuzda bu API'leri kullanıyorsanız güncellemeniz gerekebilir.
 
-Zorunlu kalırsanız 4.x'te kalmak için:
+**OkHttp'nin diğer modüllerini de aynı sürüme hizalayın.** Gradle yalnız SDK'nın bağımlı olduğu `okhttp` ve `logging-interceptor`'ı 5.x'e yükseltir; projenizdeki ya da başka bir kütüphanenin getirdiği diğer OkHttp modülleri 4.x'te kalır. Bu modüller `okhttp`'nin iç sınıflarına bağlıdır; sürümler ayrışınca hata derlemede değil çalışma anında çıkar. Örnek: React Native `okhttp-urlconnection` 4.9.2 getirir; sunucu çerez bıraktıktan sonra o alan adına giden istekte uygulama `NoClassDefFoundError: okhttp3/internal/Util` ile çöker. Bütün OkHttp modüllerini aynı sürüme çekmek için OkHttp BOM'unu ekleyin. BOM sürümü uygulamanızdaki en yüksek OkHttp sürümü olmalı, SDK'nınkinden (5.3.2) düşük olmamalı:
 
 ```kotlin
-configurations.all {
-    resolutionStrategy.force("com.squareup.okhttp3:okhttp:4.12.0")
+dependencies {
+    implementation(platform("com.squareup.okhttp3:okhttp-bom:5.3.2"))
 }
 ```
 
-> Bu durumda SDK'nın ağ katmanı 4.x üzerinde çalışır; resmi olarak desteklenmez ve test edilmemiştir.
+SDK 3.6.2'den itibaren `okhttp-urlconnection` için asgari sürüm kısıtı taşır: bu modül projenizdeyse Gradle onu en az SDK'nın OkHttp sürümüne kendisi yükseltir, daha yeni bir sürümü varsa dokunmaz. OkHttp'nin diğer modüllerinin hizalaması yine sizdedir.
+
+**OkHttp'yi 4.x'e zorlamayın.** `resolutionStrategy.force("com.squareup.okhttp3:okhttp:4.12.0")` gibi bir satır yalnız `okhttp`'yi 4.x'e düşürür, SDK'nın getirdiği diğer OkHttp modülleri 5.x'te kalır. Uyuşmazlık yüzünden debuggable derlemede SDK'nın ilk isteğinde, SDK 3.6.2'den itibaren release derlemede de çerezli istekte uygulama çöker. Projenizde bu satır varsa SDK'yı yükseltmeden önce kaldırın. SDK OkHttp 4.x üzerinde desteklenmez; çakışmayı yukarıdaki BOM ile çözün.
 
 ---
 
